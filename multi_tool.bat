@@ -2,228 +2,177 @@
 color 0a
 title MultiTool
 cls
-:top
+
+:header
 echo.
-echo ===================== MultiTool =====================
-echo 1 SystemInfo   2 FullReport   3 DiskUsage   4 LargeFiles
-echo 5 NetInfo      6 PingTrace    7 PortCheck   8 Procs
-echo 9 KillProc     10 ProdKey     11 FindFiles   12 Backup
-echo 13 Note        14 Tools       15 EventLog    16 ToggleWifi
-echo 17 Health      18 SelfSave    19 DevConsole  20 ScanPorts
-echo 21 Progress    22 Exit
+echo  ===============================================
+echo  ||                 MULTI TOOL                ||
+echo  ===============================================
 echo.
-set /p c=Choose:
-if "%c%"=="1" goto sysinfo
-if "%c%"=="2" goto fullreport
-if "%c%"=="3" goto diskusage
-if "%c%"=="4" goto largefiles
-if "%c%"=="5" goto netinfo
-if "%c%"=="6" goto pingtrace
-if "%c%"=="7" goto portcheck
-if "%c%"=="8" goto procs
-if "%c%"=="9" goto killproc
-if "%c%"=="10" goto prodkey
-if "%c%"=="11" goto findfiles
-if "%c%"=="12" goto backup
-if "%c%"=="13" goto note
-if "%c%"=="14" goto tools
-if "%c%"=="15" goto eventlog
-if "%c%"=="16" goto togglewifi
-if "%c%"=="17" goto health
-if "%c%"=="18" goto selfsave
-if "%c%"=="19" goto devconsole
-if "%c%"=="20" goto scanports
-if "%c%"=="21" goto progress
-if "%c%"=="22" goto finish
+echo   Type the number and press ENTER.
+echo.
+echo           (\_/)
+echo           ( •_•)
+echo          / >💾
+echo.
+
+echo  1  - System Info
+echo  2  - Disk Usage
+echo  3  - Network Info
+echo  4  - Ping & Traceroute
+echo  5  - Port Check
+echo  6  - Processes
+echo  7  - Kill Process
+echo  8  - File Search
+echo  9  - Backup Folder
+echo 10  - Notes
+echo 11  - Event Logs
+echo 12  - Health Check
+echo 13  - CMD Console
+echo 14  - Restart Explorer
+echo 15  - Shutdown
+echo 16  - Restart
+echo 17  - Exit
+echo.
+set /p choice=Choose: 
+
+if "%choice%"=="1" goto sysinfo
+if "%choice%"=="2" goto diskusage
+if "%choice%"=="3" goto netinfo
+if "%choice%"=="4" goto pingtrace
+if "%choice%"=="5" goto portcheck
+if "%choice%"=="6" goto listprocs
+if "%choice%"=="7" goto killproc
+if "%choice%"=="8" goto searchfiles
+if "%choice%"=="9" goto backup
+if "%choice%"=="10" goto createnote
+if "%choice%"=="11" goto eventlog
+if "%choice%"=="12" goto healthcheck
+if "%choice%"=="13" start cmd & goto header
+if "%choice%"=="14" goto restartexplorer
+if "%choice%"=="15" shutdown /s /t 0 & exit
+if "%choice%"=="16" shutdown /r /t 0 & exit
+if "%choice%"=="17" goto exit
+
+echo Invalid choice.
+pause>nul
 cls
-goto top
+goto header
+
 :sysinfo
 cls
 systeminfo | findstr /B /C:"Host Name" /C:"OS Name" /C:"OS Version" /C:"System Type" /C:"Total Physical Memory"
-wmic cpu get name
-wmic path win32_videocontroller get name
+tasklist /FI "STATUS eq running" | find /C /I ""
 pause
 cls
-goto top
-:fullreport
-cls
-set out=%~dp0report.html
-powershell -NoProfile -Command "Get-ComputerInfo | ConvertTo-Html -Title 'System Report' -PreContent '<h1>System Report</h1>' | Out-File -FilePath '%out%' -Encoding UTF8"
-if exist "%out%" start "" "%out%"
-echo Saved %out%
-pause
-cls
-goto top
+goto header
+
 :diskusage
 cls
 wmic logicaldisk get name,size,freespace
-powershell -NoProfile -Command "Get-Volume | Select DriveLetter,@{N='FreeGB';E={[math]::Round($_.SizeRemaining/1GB,2)}},@{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}} | Format-Table -AutoSize"
 pause
 cls
-goto top
-:largefiles
-cls
-powershell -NoProfile -Command "Get-ChildItem -Path . -Recurse -File -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 20 | Select @{N='MB';E={[math]::Round($_.Length/1MB,2)}},FullName | Format-Table -AutoSize"
-pause
-cls
-goto top
+goto header
+
 :netinfo
 cls
 ipconfig /all
-echo.
-echo DNS cache (first 40 lines):
-ipconfig /displaydns | more +0
 pause
 cls
-goto top
+goto header
+
 :pingtrace
 cls
-set /p h=Host or IP:
-if "%h%"=="" goto top
-ping -n 4 %h%
-tracert %h%
+set /p host=Host: 
+ping -n 4 %host%
+tracert %host%
 pause
 cls
-goto top
+goto header
+
 :portcheck
 cls
-set /p ph=Host:
-set /p pp=Port:
-if "%ph%"=="" goto top
-if "%pp%"=="" set pp=80
-powershell -NoProfile -Command "Test-NetConnection -ComputerName '%ph%' -Port %pp% | Format-List"
+set /p porthost=Host: 
+set /p portnum=Port: 
+echo Testing connection...
+powershell -NoProfile -Command "try{(New-Object Net.Sockets.TcpClient('%porthost%',%portnum%)).Close();'Port %portnum% OPEN'}catch{'Port %portnum% CLOSED'}"
 pause
 cls
-goto top
-:procs
+goto header
+
+:listprocs
 cls
 tasklist | more
 pause
 cls
-goto top
+goto header
+
 :killproc
 cls
-set /p k=Name or PID to kill:
-if "%k%"=="" goto top
-tasklist | findstr /I "%k%"
-set /p y=Kill? (y/N): 
-if /I "%y%"=="y" (taskkill /F /IM "%k%" 2>nul || taskkill /F /PID %k% 2>nul & echo Killed) else echo Aborted
+set /p proc=Process or PID: 
+taskkill /F /IM "%proc%" 2>nul || taskkill /F /PID %proc% 2>nul
 pause
 cls
-goto top
-:prodkey
+goto header
+
+:searchfiles
 cls
-wmic path SoftwareLicensingService get OA3xOriginalProductKey 2>nul
-powershell -NoProfile -Command "Try{ $dp=(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name 'DigitalProductId' -ErrorAction Stop).DigitalProductId }Catch{ Exit };$chars='BCDFGHJKMPQRTVWXY2346789';$key='';for($i=24;$i -ge 0;$i--){$k=0;for($j=14;$j -ge 0;$j--){$k=$k*256 -bxor $dp[$j+52];$dp[$j+52]=[math]::Floor($k/24);$k=$k%24}$key=$chars[$k]+$key};$key= $key.Substring(1,5)+'-'+$key.Substring(6,5)+'-'+$key.Substring(11,5)+'-'+$key.Substring(16,5)+'-'+$key.Substring(21,5);Write-Output $key"
+set /p filename=File pattern: 
+dir /s /b "%filename%"
 pause
 cls
-goto top
-:findfiles
-cls
-set /p f=Pattern (eg *.iso):
-if "%f%"=="" goto top
-dir /s /b "%f%"
-pause
-cls
-goto top
+goto header
+
 :backup
 cls
-set /p s=Source folder:
-set /p d=Destination folder:
-if "%s%"=="" goto top
-if "%d%"=="" set d=%s%_backup_%date:~10,4%-%date:~4,2%-%date:~7,2%
-robocopy "%s%" "%d%" /MIR /ETA
-echo Done
+set /p src=Source: 
+set /p dest=Destination: 
+xcopy "%src%" "%dest%" /E /I /H /Y
+echo Backup complete.
 pause
 cls
-goto top
-:note
+goto header
+
+:createnote
 cls
-set /p nf=Note file (default notes.txt):
-if "%nf%"=="" set nf=notes.txt
-set /p txt=Note (single line):
-echo %date% %time% - %txt%>>"%nf%"
-echo Saved
+set /p notefile=File (notes.txt default): 
+if "%notefile%"=="" set notefile=notes.txt
+set /p note=Note: 
+echo %date% %time% - %note%>>"%notefile%"
+echo Saved.
 pause
 cls
-goto top
-:tools
-cls
-echo 1 Notepad 2 Calc 3 Explorer 4 PowerShell
-set /p t=:
-if "%t%"=="1" start notepad
-if "%t%"=="2" start calc
-if "%t%"=="3" start explorer "%cd%"
-if "%t%"=="4" start powershell
-pause
-cls
-goto top
+goto header
+
 :eventlog
 cls
-wevtutil qe System /f:text /c:50
+wevtutil qe System /f:text /c:20
 pause
 cls
-goto top
-:togglewifi
+goto header
+
+:healthcheck
 cls
-powershell -NoProfile -Command "Get-NetAdapter | Format-Table -AutoSize"
-set /p a=Adapter name to toggle:
-if "%a%"=="" goto top
-set /p s=on/off:
-if /I "%s%"=="on" powershell -NoProfile -Command "Enable-NetAdapter -Name '%a' -Confirm:$false"
-if /I "%s%"=="off" powershell -NoProfile -Command "Disable-NetAdapter -Name '%a' -Confirm:$false"
-echo Done
-pause
-cls
-goto top
-:health
-cls
-powershell -NoProfile -Command "Get-Volume | Select DriveLetter,@{N='FreeGB';E={[math]::Round($_.SizeRemaining/1GB,2)}},@{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}} | Format-Table -AutoSize"
-powershell -NoProfile -Command "Get-Service -Name wuauserv,w32time,bits -ErrorAction SilentlyContinue | Format-Table -AutoSize"
-echo Quick health done
-pause
-cls
-goto top
-:selfsave
-cls
-set d=%USERPROFILE%\Documents\MultiTool_%date:~10,4%-%date:~4,2%-%date:~7,2%.bat
-copy "%~f0" "%d%"
-echo Saved %d%
-pause
-cls
-goto top
-:devconsole
-cls
-start cmd /k "cd /d %cd%"
-cls
-goto top
-:scanports
-cls
-set /p sh=Host:
-set /p sp=StartPort:
-set /p ep=EndPort:
-if "%sp%"=="" set sp=1
-if "%ep%"=="" set ep=1024
-for /L %%p in (%sp%,1,%ep%) do (powershell -NoProfile -Command "try{ $c=New-Object System.Net.Sockets.TcpClient(); $a = $c.BeginConnect('%sh%',%%p,$null,$null); if($a.AsyncWaitHandle.WaitOne(100)){ $c.EndConnect($a); Write-Output 'OPEN: %%p' }; $c.Close() } catch{}")
-echo Done
-pause
-cls
-goto top
-:progress
-cls
-for /L %%i in (1,1,30) do (
- set /a bar=%%i*3
- <nul set /p ="["
- for /L %%j in (1,1,%%j) do <nul set /p ="#"
- <nul set /p ="] %%i%%`r"
- ping -n 1 -w 100 127.0.0.1 >nul
-)
+echo Checking disk space...
+wmic logicaldisk get name,freespace,size
 echo.
-echo Complete!
+echo Checking key services...
+sc query wuauserv | find "STATE"
+sc query w32time | find "STATE"
+sc query bits | find "STATE"
 pause
 cls
-goto top
-:finish
+goto header
+
+:restartexplorer
 cls
+taskkill /f /im explorer.exe
+start explorer.exe
+cls
+goto header
+
+:exit
+cls
+echo Done.
 color 07
 exit /b
